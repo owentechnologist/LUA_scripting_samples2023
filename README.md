@@ -1,23 +1,24 @@
 ## LUA_scripting_samples
 A place to keep LUA scripts to accomplish writing and reading different types of data to Redis
 
+#### The most recent addition is lua_order_load.md which has as its purpose the creation of hundreds of thousands of fictitios Hash order event records (millions if repeated with adjusted arguments)
 
-Note: several wrapper Shell scripts are provided (see shell_scripts_readme.txt and LUA_VisualAid.png )
-
-## The following LUA utility script goes a long way towards deleting keys en mass: 
+### The following LUA utility script goes a long way towards deleting keys en mass:
 NB: after the final quotation mark come 2 arguments:
 
 * 1st argument indicates how many keynames will be passed in (always one for this script)
 
 * 2nd argument is the key pattern or name to use as a prefix against which SCAN will match.  (this is also useful and worthy of attention, as it routes the lua behavior
-to a matching shard for the key pattern or name given
-Note that due to my editor not behaving - the deletion svript that follows has two unneccessary new line statememnts in it...
+  to a matching shard for the key pattern or name given
+  Note that due to my editor not behaving - the deletion svript that follows has two unneccessary new line statememnts in it...
 
 ```
 EVAL "local cursor = 0 local keyNum = 0 repeat local res = redis.call('scan',cursor,'MATCH',KEYS[1]..'*') if(res ~= nil and #res>=0) then 
 cursor = tonumber(res[1]) local ks = res[2] if(ks ~= nil and #ks>0) then for i=1,#ks,1 do local key = tostring(ks[i]) 
 redis.call('UNLINK',key) end keyNum = keyNum + #ks end end until( cursor <= 0 ) return keyNum" 1 memtier
 ```
+
+For some of the more bespoke and complex scenarios, several wrapper Shell scripts are provided (see shell_scripts_readme.txt and LUA_VisualAid.png )
 
 The simplest of the shell scripts are 
 ReliableWriterReaderSortedSet.sh
@@ -37,12 +38,7 @@ Example Usage of the ReliableWriterReaderHash.sh would be:
 ./ReliableWriterReaderHash.sh myhash1 100
 ```
 (be sure to  edit the hostnames and ports within the scripts so they point to the correct endpoints)
-## Below you will find more LUA scripts:
-
-### Calculate routing values to create even divisions across redis slots
-```
-EVAL "local val = 0 for index = 1,ARGV[1] do val = 16384*(index*(100/ARGV[1])) redis.call('ZADD',KEYS[1],index,math.floor(val/100)) end" 1 z:routvalues 25
-```
+### Below you will find more LUA scripts:
 
 ###  Using the redis-cli and LUA scripts to test SORTED SET
 
@@ -216,4 +212,9 @@ EVAL "for index = 1,ARGV[1] do local t = (redis.call('TIME'))[1] local t2 = math
 EVAL "for index = 1,ARGV[1] do local t1 = redis.call('TIME')[1] local t2 = math.random(1, 100000) for index2 = 1,((t2%15)+1) do local t3 = math.random(1, 1000000) redis.call('HSET',KEYS[1]..':PURCHASES:'..ARGV[2]..t1..'-'..index,'item_'..index2..'_cost',(index2*10.25)) end end" 1 h:{9999} 10 TRGT
 ```
 
+#### The following is an unexamined attempt to Calculate routing values to create even divisions across redis slots
+#### A better discussion around this topic is available here:  https://github.com/owentechnologist/zewtopia_wrkshop_scripts/blob/master/SlotsAndShardingThoughts.md
+```
+EVAL "local val = 0 for index = 1,ARGV[1] do val = 16384*(index*(100/ARGV[1])) redis.call('ZADD',KEYS[1],index,math.floor(val/100)) end" 1 z:routvalues 25
+```
 
