@@ -1,0 +1,3 @@
+-- from redis-cli command line or in RedisInsight you can execute the following (be sure to replace the last argument with a keypattern you wish to match against!
+
+EVAL "local cursor = 0 local keyNum = 0 repeat local res = redis.call('scan',cursor,'MATCH',KEYS[1]..'*') if(res ~= nil and #res&gt;=0) then cursor = tonumber(res[1]) local ks = res[2] if(ks ~= nil and #ks&gt;0) then for i=1,#ks,1 do local key = tostring(ks[i]) redis.call('UNLINK',key) end keyNum = keyNum + #ks end end until( cursor &lt;= 0 ) return keyNum" 1 addr:{sgc}

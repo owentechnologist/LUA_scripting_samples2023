@@ -1,0 +1,26 @@
+######## Testing behavior of JSON objects as they grow over time #########
+## BEGIN TESTING:
+# Delete old timeTracking Stream key:
+redis-cli -h 192.168.1.21 -p 12000 DEL timeTrackStream{g1}
+
+# Delete old JSON key:
+redis-cli -h 192.168.1.21 -p 12000 DEL jo{g1}
+
+# Create base information and structure for new JSON key with two nested 'groups' Objects:
+redis-cli -h 192.168.1.21 -p 12000 JSON.SET jo{g1} $ '{"name": "Practitioner1","groupCount": 2,"groups": {"grp1": {"name": "gn1","groupId": "gid1","groupUID": "UID:1"},"grp2": {"name": "gn2","groupId": "gid2","groupUID": "UID:2"}}}'
+
+# Confirm groups size before we start the loop/test:
+redis-cli -h 192.168.1.21 -p 12000 JSON.OBJLEN jo{g1} $.groups
+
+## populate with 1000 additional nested groups Objects + spit out latency to screen  (looped 1000 times using redis-cli -r )
+redis-cli -h 192.168.1.21 -p 12000 -r 1000 EVAL "local startTime = redis.call('TIME') local groupCount =1+ (redis.call('JSON.OBJLEN', KEYS[1], '$.groups')[1]) local grpObjKey = '$.groups.grp'.. groupCount local grpObjVal = '{\"name\"\: \"gn' ..groupCount.. '\",\"groupId\"\: \"gid' ..groupCount.. '\",\"groupUID\"\: \"UID\:'..groupCount..'\"}' redis.call('JSON.SET', KEYS[1],'$.groupCount',groupCount) redis.call('JSON.SET', KEYS[1], grpObjKey,grpObjVal) local endTime = redis.call('TIME') local x = 0 if(endTime[2] - startTime[2] > 0) then x = (endTime[2] - startTime[2]) else x=(((endTime[1] - startTime[1])*1000000)-(1000000-startTime[2])+endTime[2]) end return x" 1 jo{g1}
+
+## now 20,000 times with storing the latency in a Stream to see if latency grows over time with added objects:
+redis-cli -h 192.168.1.21 -p 12000 EVAL "for index = 1,20000 do local startTime = redis.call('TIME') local groupCount =1+ (redis.call('JSON.OBJLEN', KEYS[1], '$.groups')[1]) local grpObjKey = '$.groups.grp'.. groupCount local grpObjVal = '{\"name\"\: \"gn' ..groupCount.. '\",\"groupId\"\: \"gid' ..groupCount.. '\",\"groupUID\"\: \"UID\:'..groupCount..'\"}' redis.call('JSON.SET', KEYS[1],'$.groupCount',groupCount) redis.call('JSON.SET', KEYS[1], grpObjKey,grpObjVal) local endTime = redis.call('TIME') local x = 0 if(endTime[2] - startTime[2] > 0) then x = (endTime[2] - startTime[2]) else x=(((endTime[1] - startTime[1])*1000000)-(1000000-startTime[2])+endTime[2]) end redis.call('XADD',KEYS[2],'*','latency_measure',x,'groupCount',groupCount,'startTime_millis',startTime[1],'endTime_millis',endTime[1]) end" 2 jo{g1} timeTrackStream{g1}
+
+# Get latest count of # groups Objects:
+redis-cli -h 192.168.1.21 -p 12000 JSON.OBJLEN jo{g1} $.groups
+
+# Use Streams API to look at the first and last 5 entries and compare the latencies:
+redis-cli -h 192.168.1.21 -p 12000 XRANGE timeTrackStream{g1} - + COUNT 5
+redis-cli -h 192.168.1.21 -p 12000 XREVRANGE timeTrackStream{g1} + - COUNT 5

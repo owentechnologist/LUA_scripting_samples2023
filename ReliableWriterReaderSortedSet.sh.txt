@@ -1,0 +1,41 @@
+#! /usr/bin/env bash
+
+# this script expects to be edited with the following values needing to be set:
+# The host of the initial target Redis instance (in cluster #1)
+# The port of the initial target Redis instance (in cluster #1)
+# The host of the second target Redis instance (in cluster #2)
+# The port of the second target Redis instance (in cluster #2)
+# edit these four properties to match your environment:
+
+host=redis-6379.homelab.local
+port=6379
+
+host2=localhost
+port2=6379
+
+# this script also expects 2 arguments:
+# 1 - the name of the key to be written and read from
+# 2 - the number of entries to write into that key
+# example usage:  ReliableWriterReaderSortedSet.sh testkey 2000
+# note that the prefix 'z:' will be placed in front of the keyname provided to denote the use of a SortedSet
+
+starttime=$(redis-cli -h $host -p $port time)
+
+arrIN=(${starttime// / })
+starttime=${arrIN[0]}
+
+redis-cli -h $host -p $port EVAL "for index = 1,ARGV[1] do local t = (redis.call('TIME'))[1] redis.call('ZADD',KEYS[1],t,index) end" 1 z:$1 $2
+
+redis-cli -h $host -p $port EVAL "local zscoreSum = 0 local zcard = (redis.call('ZCARD',KEYS[1])) for index = 1,zcard do zscoreSum = (zscoreSum + (redis.call('ZRANGE',KEYS[1],'0','-1'))[index]) end return 'Sum of values of '..ARGV[1]..' entries for Sorted Set named '..KEYS[1]..' is '..zscoreSum" 1 z:$1 $2
+
+redis-cli -h $host2 -p $port2 -i 1 EVAL "local zscoreSum = 0 local zcard = (redis.call('ZCARD',KEYS[1])) for index = 1,zcard do zscoreSum = (zscoreSum + (redis.call('ZRANGE',KEYS[1],'0','-1'))[index]) end return 'Sum of values of '..ARGV[1]..' entries for Sorted Set named '..KEYS[1]..' is '..zscoreSum" 1 z:$1 $2
+
+endtime=$(redis-cli -h $host -p $port time)
+
+arrIN=(${endtime// / })
+endtime=${arrIN[0]}
+
+duration=$(($endtime-$starttime))
+echo $starttime
+echo $endtime
+echo $0 $1 $2 "took "$duration "seconds"

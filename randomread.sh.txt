@@ -1,0 +1,16 @@
+#! /usr/bin/env bash
+
+host=redis-6379.homelab.local
+port=6379
+
+for ((i =0; i < $1; i++)) do
+echo keyname=$(redis-cli -h $host -p $port randomkey)
+keyname=$(redis-cli -h $host -p $port randomkey)
+echo keytype=$(redis-cli -h $host -p $port type $keyname)
+keytype=$(redis-cli -h $host -p $port type $keyname)
+if [ "$keytype"=="zset" ];
+then
+    oput=$(redis-cli -h $host -p $port ZRANGE $keyname 0 3)
+    echo $oput
+fi
+done
