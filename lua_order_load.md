@@ -18,6 +18,10 @@ FT.CREATE idx_paorders PREFIX 1 "h:order" ON HASH SCHEMA category TAG status TAG
 ```
 #### the following are some sample queries:
 
+``` 
+FT.AGGREGATE idx_paorders "@timestamp:[-inf,1686104900] -@status:{cancelled}"  groupby 0 reduce count 0 as total_quantity_not_cancelled
+```
+
 ```
 FT.AGGREGATE idx_paorders "@timestamp:[-inf,1686004900] -@status:{cancelled}" groupby 0 reduce count 0 as total
 ```
@@ -30,6 +34,10 @@ FT.AGGREGATE idx_paorders "@timestamp:[-inf,1686004900] -@status:{cancelled}" gr
 FT.AGGREGATE idx_paorders "@timestamp:[-inf,1686004900] @status:{shipped}" groupby 0 reduce count 0 as total
 ```
 
+``` 
+FT.AGGREGATE idx_paorders "@timestamp:[-inf,1686004900] @color:{silver_K}"  groupby 2 @status @quantity reduce SUM 1 quantity as  total_quantity_by_LOT_AND_status
+```
+
 ```
 FT.AGGREGATE idx_paorders "@timestamp:[-inf,1686004900] -@status:{delivered}" groupby 1 @color reduce count 0 as total
 ```
@@ -37,4 +45,20 @@ FT.AGGREGATE idx_paorders "@timestamp:[-inf,1686004900] -@status:{delivered}" gr
 #### This allows the observer to see inside the engine a bit:
 ```
 FT.PROFILE idx_paorders AGGREGATE QUERY "@timestamp:[-inf,1686004900] -@status:{cancelled}" groupby 1 @color reduce count 0 as total
+```
+****
+****
+#### This next command is for Redis Enterprise and upgrades a database with the named search and json modules.  It also enables the use of configuration settings for TIMEOUT and such:
+``` 
+rladmin> upgrade module db_name db:44 module_name ReJSON version 20405 module_args "" module_name search version 20609 module_args "PARTITIONS AUTO MAXPREFIXEXPANSIONS 9000000000000000000 TIMEOUT 120000 ON_TIMEOUT FAIL"
+```
+#### These sample queries are for when ODBC or JDBC SQL drivers are used on top of the search index:
+``` 
+SELECT count(status) as total_quantity_for_status,status from idx_paorders where status NOT LIKE 'cancelled%' and timestamp < 1685470009 group by status;
+```
+``` 
+SELECT count(status) as total_quantity_for_status,status from idx_paorders where status NOT LIKE 'cancelled%' and timestamp < 1685404900 group by status;
+```
+``` 
+SELECT count(*) howmany from idx_paorders;
 ```
