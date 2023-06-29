@@ -30,7 +30,7 @@ NB: if you want to scale and utilize multiple shards/slots you need to:
 ``` 
 FT.CREATE idx_dcp ON JSON PREFIX 1 dcp: SCHEMA $.comments AS comments TEXT $.flag AS flag TAG $.tableid AS tableid NUMERIC $.tablename as tablename TEXT $.buareaname AS buareaname TAG $.buname AS buname TAG $.dbname as dbname TEXT $.platform as platform TEXT $.columndetails[*].columnname AS columnname TEXT $.columndetails[*].datatype AS datatype TAG $.columndetails[*].tag AS tag TAG $.columndetails[*].columnid AS columnid NUMERIC
 ```
-### This FT.CREATE command is for earlier versions of search that do no support multi-value [*] indexing
+### This FT.CREATE command is for earlier versions of search that do not support multi-value [*] indexing
 ``` 
 FT.CREATE idx_dcp ON JSON PREFIX 1 dcp: SCHEMA $.comments AS comments TEXT $.flag AS flag TAG $.tableid AS tableid NUMERIC $.tablename as tablename TEXT $.buareaname AS buareaname TAG $.buname AS buname TAG $.dbname as dbname TEXT $.platform as platform TEXT $.columndetails[0].columnname AS columnname TEXT $.columndetails[0].datatype AS datatype TAG $.columndetails[0].tag AS tag TAG $.columndetails[0].columnid AS columnid NUMERIC
 ```
