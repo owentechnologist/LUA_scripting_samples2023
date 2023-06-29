@@ -35,25 +35,28 @@ FT.CREATE idx_dcp ON JSON PREFIX 1 dcp: SCHEMA $.comments AS comments TEXT $.fla
 FT.CREATE idx_dcp ON JSON PREFIX 1 dcp: SCHEMA $.comments AS comments TEXT $.flag AS flag TAG $.tableid AS tableid NUMERIC $.tablename as tablename TEXT $.buareaname AS buareaname TAG $.buname AS buname TAG $.dbname as dbname TEXT $.platform as platform TEXT $.columndetails[0].columnname AS columnname TEXT $.columndetails[0].datatype AS datatype TAG $.columndetails[0].tag AS tag TAG $.columndetails[0].columnid AS columnid NUMERIC
 ```
 
-### This is a query that results in some output based on the column type equaling DATETIME
-### Note that the response is not the entire JSON payload (the whole table) but rather the matching column info
+### A sample simple search query using our new index:
 ``` 
 FT.SEARCH idx_dcp @comments:(Oracle) return 1 $.tableid LIMIT 0 10
 ```
+### another one retrieving a different portion of our JSON document
 ``` 
 FT.SEARCH idx_dcp @comments:(Oracle) return 1 $.columndetails[2] LIMIT 0 1
 ```
+### This is a query that results in some output based on the column type equaling DATETIME
+### Note that the response is not the entire JSON payload (the whole table) but rather the matching column info
 ``` 
 FT.SEARCH idx_dcp '@datatype:{DATETIME}' RETURN 3 '$.columndetails[?(@.datatype=="DATETIME")]' as match
 ```
+### This query uses FT.AGGREGATE instead of FT.SEARCH and includes the same datetype filter: 
 ``` 
 FT.AGGREGATE idx_dcp '@datatype:{BIGINT}' LOAD 5 '$.columndetails[?(@.datatype=="BIGINT")]' as match @__key @tableid LIMIT 0 10 DIALECT 3
 ```
-Here we indicate we want to summarize a long comment field:
+### Here we indicate we want to summarize a long comment field:
 ``` 
 FT.SEARCH idx_dcp '@platform:(Greenplum) @comments:(cancelled)' SUMMARIZE FIELDS 1 comments FRAGS 1 LEN 3 LIMIT 0 1 DIALECT 3
 ```
-Here we indicate we want to highlight the matching tokens in the result:
+### Here we indicate we want to highlight the matching tokens in the result:
 ``` 
 FT.SEARCH idx_dcp '@platform:(Greenplum) @comments:(cancelled)' HIGHLIGHT FIELDS 1 comments LIMIT 0 1 DIALECT 3
 ```
