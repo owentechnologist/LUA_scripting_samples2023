@@ -54,9 +54,9 @@ FT.AGGREGATE idx_dcp '@datatype:{BIGINT}' LOAD 5 '$.columndetails[?(@.datatype==
 ```
 ### Here we indicate we want to summarize a long comment field:
 ``` 
-FT.SEARCH idx_dcp '@platform:(Greenplum) @comments:(cancelled)' SUMMARIZE FIELDS 1 comments FRAGS 1 LEN 3 LIMIT 0 1 DIALECT 3
+FT.SEARCH idx_dcp '@platform:(Greenplum) @comments:(cancelled)' SUMMARIZE FIELDS 1 comments FRAGS 1 LEN 3 return 1 comments LIMIT 0 1 DIALECT 2
 ```
 ### Here we indicate we want to highlight the matching tokens in the result:
 ``` 
-FT.SEARCH idx_dcp '@platform:(Greenplum) @comments:(cancelled)' HIGHLIGHT FIELDS 1 comments LIMIT 0 1 DIALECT 3
+FT.SEARCH idx_dcp '@platform:(Greenplum) @comments:(cancelled)' HIGHLIGHT FIELDS 1 comments return 1 comments LIMIT 0 1 DIALECT 2
 ```
