@@ -227,6 +227,7 @@ FT.CREATE idx_paorders PREFIX 1 "h:order" ON HASH SCHEMA custid TAG category TAG
 FT.CREATE idx_pacustomers PREFIX 1 "j:customer" ON JSON SCHEMA $.custid AS CUSTOMERID TAG $.fname AS FIRSTNAME TAG $.lname AS LASTNAME TAG $.Gender AS GENDER TAG $.addresses[*].StreetName AS StreetName TAG $.addresses[*].HouseNumber AS HouseNumber TAG   
 ```
 Save the above code block to a plain text file named: 
+
 do.redis
 and then invoke redis-cli like this:
 ```
