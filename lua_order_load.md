@@ -126,6 +126,7 @@ rladmin> migrate shard 115 target_node 2
 
 The following is a series of commands designed to be written to a file that is then passed to redis-cli so the user doesn't have to manually adjust the scripts to populate ~6 million keys. (4 million orders and 2 million customers)
 !!Make certain there are no search indexes in the DB at the time you attempt to load using LUA
+NB: you will need a redis DB with > 6GB RAM available to load this many keys and the index.
 ``` 
 ft.dropindex idx_pacustomers
 ft.dropindex idx_paorders
